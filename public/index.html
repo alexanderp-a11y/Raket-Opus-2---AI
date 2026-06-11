@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raket Opus 2 - Developer AI Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .emoji {
+            font-size: 32px;
+        }
+
+        /* Chat Area */
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-box::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-box::-webkit-scrollbar-track {
+            background: #e9ecef;
+            border-radius: 10px;
+        }
+
+        .chat-box::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .chat-box::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+
+        /* Messages */
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+            align-items: flex-end;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .message.user .avatar {
+            background: #667eea;
+            color: white;
+            order: 2;
+        }
+
+        .message.bot .avatar {
+            background: #764ba2;
+            color: white;
+            order: 1;
+        }
+
+        .bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 15px;
+            word-wrap: break-word;
+            line-height: 1.4;
+            font-size: 15px;
+        }
+
+        .message.user .bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.bot .bubble {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message.error .bubble {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+            border-left: 4px solid #c33;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .loading span {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+
+        .loading span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: translateY(0);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Welcome Message */
+        .welcome {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .welcome .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .welcome .subtitle {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+
+        .welcome-tips {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 0 auto;
+            font-size: 13px;
+            color: #555;
+            max-width: 400px;
+            text-align: left;
+        }
+
+        /* Input Area */
+        .input-section {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .textarea-wrapper {
+            flex: 1;
+        }
+
+        #userInput {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            resize: none;
+            max-height: 120px;
+            transition: border-color 0.3s;
+            outline: none;
+        }
+
+        #userInput:focus {
+            border-color: #667eea;
+        }
+
+        #userInput::placeholder {
+            color: #aaa;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #sendBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+        }
+
+        #sendBtn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        #sendBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #clearBtn {
+            background: #f0f0f0;
+            color: #666;
+            padding: 12px 20px;
+        }
+
+        #clearBtn:hover {
+            background: #e0e0e0;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+
+            .bubble {
+                max-width: 85%;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            #userInput {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <span class="emoji">🚀</span>
+                Raket Opus 2
+            </h1>
+            <p>Developer AI Chatbot - Ask Anything</p>
+        </div>
+
+        <!-- Chat Box -->
+        <div class="chat-box" id="chatBox">
+            <div class="welcome">
+                <div class="title">Welcome to Raket Opus 2 🤖</div>
+                <div class="subtitle">Your AI-powered developer assistant</div>
+                <p>Ask me anything about programming, web development, DevOps, databases, and more!</p>
+                <div class="welcome-tips">
+                    <strong>💡 Tips:</strong><br>
+                    • Ask about any programming language<br>
+                    • Get help with debugging and optimization<br>
+                    • Learn best practices and design patterns<br>
+                    • Discuss DevOps, databases, and architecture
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="input-section">
+            <div class="input-wrapper">
+                <div class="textarea-wrapper">
+                    <textarea
+                        id="userInput"
+                        placeholder="Ask me anything... (Shift+Enter for new line, Enter to send)"
+                        rows="1"
+                    ></textarea>
+                </div>
+                <div class="button-group">
+                    <button id="sendBtn" onclick="sendMessage()">
+                        📤 Send
+                    </button>
+                    <button id="clearBtn" onclick="clearChat()">Clear</button>
+                </div>
+            </div>
+            <div class="info-text" id="infoText">Ready to chat! Start by asking a question.</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://localhost:3000/api';
+        let conversationId = null;
+        let isWaiting = false;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            conversationId = generateId();
+            setupKeyboardEvents();
+            updateInfo();
+        });
+
+        // Generate unique conversation ID
+        function generateId() {
+            return 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Setup keyboard events
+        function setupKeyboardEvents() {
+            const input = document.getElementById('userInput');
+
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            input.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+        }
+
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+
+            if (!message) {
+                alert('Please enter a message');
+                return;
+            }
+
+            if (isWaiting) {
+                alert('Please wait for the response...');
+                return;
+            }
+
+            // Remove welcome message
+            removeWelcome();
+
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Show loading
+            isWaiting = true;
+            addLoading();
+            document.getElementById('sendBtn').disabled = true;
+            updateInfo('AI is thinking...');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        question: message,
+                        conversationId: conversationId
+                    })
+                });
+
+                const data = await response.json();
+                removeLoading();
+
+                if (data.success) {
+                    addMessage(data.answer, 'bot');
+                } else {
+                    addMessage('Error: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                removeLoading();
+                console.error('Error:', error);
+                addMessage('⚠️ Connection Error: Make sure the server is running on http://localhost:3000\n\nError: ' + error.message, 'error');
+            } finally {
+                isWaiting = false;
+                document.getElementById('sendBtn').disabled = false;
+                updateInfo('Ready');
+                input.focus();
+            }
+        }
+
+        // Add message to chat
+        function addMessage(text, type) {
+            const chatBox = document.getElementById('chatBox');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + type;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            avatar.textContent = type === 'user' ? '👤' : (type === 'error' ? '⚠️' : '🤖');
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.textContent = text;
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(bubble);
+            chatBox.appendChild(messageDiv);
+
+            // Auto scroll
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Add loading indicator
+        function addLoading() {
+            const chatBox = document.getElementById('chatBox');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot';
+            messageDiv.id = 'loadingMsg';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            avatar.textContent = '🤖';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble loading';
+            bubble.innerHTML = '<span></span><span></span><span></span>';
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(bubble);
+            chatBox.appendChild(messageDiv);
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Remove loading indicator
+        function removeLoading() {
+            const loading = document.getElementById('loadingMsg');
+            if (loading) {
+                loading.remove();
+            }
+        }
+
+        // Remove welcome message
+        function removeWelcome() {
+            const welcome = document.querySelector('.welcome');
+            if (welcome) {
+                welcome.remove();
+            }
+        }
+
+        // Clear chat
+        function clearChat() {
+            if (confirm('Clear all messages?')) {
+                document.getElementById('chatBox').innerHTML = `
+                    <div class="welcome">
+                        <div class="title">Welcome to Raket Opus 2 🤖</div>
+                        <div class="subtitle">Your AI-powered developer assistant</div>
+                        <p>Ask me anything about programming, web development, DevOps, databases, and more!</p>
+                        <div class="welcome-tips">
+                            <strong>💡 Tips:</strong><br>
+                            • Ask about any programming language<br>
+                            • Get help with debugging and optimization<br>
+                            • Learn best practices and design patterns<br>
+                            • Discuss DevOps, databases, and architecture
+                        </div>
+                    </div>
+                `;
+                conversationId = generateId();
+                updateInfo('Chat cleared');
+            }
+        }
+
+        // Update info text
+        function updateInfo(text) {
+            const info = document.getElementById('infoText');
+            if (text) {
+                info.textContent = text;
+            } else {
+                info.textContent = 'Conversation ID: ' + conversationId.substring(0, 20) + '...';
+            }
+        }
+    </script>
+</body>
+</html>

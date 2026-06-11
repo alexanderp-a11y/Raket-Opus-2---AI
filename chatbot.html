@@ -415,6 +415,32 @@
             margin-top: 10px;
         }
 
+        .model-selector {
+            margin: 15px 0;
+        }
+
+        .model-selector label {
+            display: block;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .model-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .model-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .main-container {
@@ -453,6 +479,16 @@
                 placeholder="sk-..." 
                 autocomplete="off"
             >
+            
+            <div class="model-selector">
+                <label for="modelSelect">Select AI Model:</label>
+                <select id="modelSelect">
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Fast & Free) ⭐</option>
+                    <option value="gpt-4">GPT-4 (Premium - if you have access)</option>
+                    <option value="gpt-4-turbo-preview">GPT-4 Turbo (if available)</option>
+                </select>
+            </div>
+
             <div class="error-text" id="errorText"></div>
             <div class="buttons">
                 <button class="cancel-btn" onclick="skipSetup()">Skip / Use Local</button>
@@ -516,6 +552,7 @@
     <script>
         // Using OpenAI API directly from browser
         let apiKey = null;
+        let selectedModel = 'gpt-3.5-turbo';
         let conversationId = null;
         let isWaiting = false;
         let conversationHistory = [];
@@ -527,7 +564,10 @@
             
             // Check if API key is stored
             apiKey = localStorage.getItem('openai_api_key');
+            selectedModel = localStorage.getItem('selected_model') || 'gpt-3.5-turbo';
+            
             if (apiKey) {
+                document.getElementById('modelSelect').value = selectedModel;
                 closeSetupModal();
             } else {
                 showSetupModal();
@@ -554,6 +594,8 @@
             const input = document.getElementById('apiKeyInput');
             const key = input.value.trim();
             const errorText = document.getElementById('errorText');
+            const modelSelect = document.getElementById('modelSelect');
+            selectedModel = modelSelect.value;
 
             if (!key) {
                 errorText.textContent = 'Please enter an API key';
@@ -567,10 +609,11 @@
 
             // Save to localStorage
             localStorage.setItem('openai_api_key', key);
+            localStorage.setItem('selected_model', selectedModel);
             apiKey = key;
             errorText.textContent = '';
             closeSetupModal();
-            updateInfo('API Key saved! Ready to chat.');
+            updateInfo(`Connected with ${selectedModel}`);
         }
 
         // Skip setup
@@ -640,7 +683,7 @@
                         'Authorization': `Bearer ${apiKey}`
                     },
                     body: JSON.stringify({
-                        model: 'gpt-4',
+                        model: selectedModel,
                         messages: [
                             {
                                 role: 'system',
@@ -771,7 +814,7 @@
             if (text) {
                 info.textContent = text;
             } else {
-                info.textContent = 'Conversation ID: ' + conversationId.substring(0, 20) + '...';
+                info.textContent = 'Using ' + selectedModel + ' | Conversation: ' + conversationId.substring(0, 15) + '...';
             }
         }
     </script>
